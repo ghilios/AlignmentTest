@@ -6,11 +6,9 @@ public class Program
 {
     static void Main(string[] args)
     {
-        var d = 2458484.833333d - 2451545.0d;
-        // var sofaJd = WWA.wwaGmst06(2451545.0d, 6935.5d + (8.0d/24.0d), 0.0d, 0.0d);
-        var sofaJd = WWA.wwaGmst06(2458484.833333d, 0.0d, 2458484.833333d, 0.0d);
-        string hms = AstroUtil.RadiansToHMS(sofaJd);
-        Console.WriteLine(hms);
+        DateTime now = DateTime.UtcNow;
+        double gmst = AstroUtil.ToMeanSiderealTime(now);
+        Console.WriteLine($"GMST: {AstroUtil.RadiansToHMS(gmst)}");
 
         // Right Ascension (RA) 6 hr 45 min 09 sec, Declination (Dec) -16 deg 42 min 58 sec
         // Latitude 41.
@@ -22,17 +20,18 @@ public class Program
         };
         */
 
-        double latitude = 0.88660302d;
+        double latitude = AstroUtil.ToRadians(41.2915117d); // 41 17 29.4426 N
+        double longitude = AstroUtil.ToRadians(-74.3785292d); // 74 22 42.7044 W
         System.Console.WriteLine($"Latitude: {AstroUtil.RadiansToDMS(latitude)}");
+        System.Console.WriteLine($"Longitude: {AstroUtil.RadiansToDMS(longitude)}");
         EquatorialCoordinates siriusCoordinates = new EquatorialCoordinates(
             ra: -0.69112174d,
             dec: 0.14718022d);
-        System.Console.WriteLine(siriusCoordinates.ToPolar().ToDirectionCosine());
-
-        HorizonCoordinates siriusHorizonCoordinates_sofa = EquatorialToHorizon_sofa(siriusCoordinates, latitude);
-        HorizonCoordinates siriusHorizonCoordinates_direct = EquatorialToHorizon_direct(siriusCoordinates, latitude);
-        EquatorialCoordinates siriusEquatorialCoordinates_sofa = HorizonToEquatorial_sofa(siriusHorizonCoordinates_sofa, latitude);
-        EquatorialCoordinates siriusEquatorialCoordinates_direct = HorizonToEquatorial_direct(siriusHorizonCoordinates_direct, latitude);
+        LocalEquatorialCoordinates localSiriusCoordinates = siriusCoordinates.ToLocalEquatorial(now, longitude);
+        HorizonCoordinates siriusHorizonCoordinates_sofa = EquatorialToHorizon_sofa(localSiriusCoordinates, latitude);
+        HorizonCoordinates siriusHorizonCoordinates_direct = EquatorialToHorizon_direct(localSiriusCoordinates, latitude);
+        LocalEquatorialCoordinates siriusEquatorialCoordinates_sofa = HorizonToEquatorial_sofa(siriusHorizonCoordinates_sofa, latitude);
+        LocalEquatorialCoordinates siriusEquatorialCoordinates_direct = HorizonToEquatorial_direct(siriusHorizonCoordinates_direct, latitude);
         System.Console.WriteLine($"Sirius Original: {siriusCoordinates}");
         System.Console.WriteLine($"Sirius Horizon (SOFA): {siriusHorizonCoordinates_sofa}");
         System.Console.WriteLine($"Sirius Horizon (direct): {siriusHorizonCoordinates_direct}");
@@ -40,29 +39,29 @@ public class Program
         System.Console.WriteLine($"Sirius Equatorial (direct): {siriusEquatorialCoordinates_direct}");
     }
 
-    public static EquatorialCoordinates HorizonToEquatorial_sofa(HorizonCoordinates horizon, double latitude) {
+    public static LocalEquatorialCoordinates HorizonToEquatorial_sofa(HorizonCoordinates horizon, double latitude) {
         double ha = double.NaN;
         double dec = double.NaN;
         WWA.wwaAe2hd(az: horizon.Azimuth, el: horizon.Altitude, phi: latitude, ha: ref ha, dec: ref dec);
-        return new EquatorialCoordinates(
-            ra: ha,
+        return new LocalEquatorialCoordinates(
+            lha: ha,
             dec: dec);
     }
-    public static EquatorialCoordinates HorizonToEquatorial_direct(HorizonCoordinates horizon, double latitude) {
+    public static LocalEquatorialCoordinates HorizonToEquatorial_direct(HorizonCoordinates horizon, double latitude) {
         var horizonRect = horizon.ToPolar().ToDirectionCosine().Rotate_Y(latitude - AstroUtil.HALF_PI);
-        var pc = horizonRect.ToPolarCoordinates().AsEquatorial();
+        var pc = horizonRect.ToPolarCoordinates().AsLocalEquatorial();
         return pc;
     }
-    public static HorizonCoordinates EquatorialToHorizon_direct(EquatorialCoordinates equatorial, double latitude) {
+    public static HorizonCoordinates EquatorialToHorizon_direct(LocalEquatorialCoordinates equatorial, double latitude) {
         var horizonRect = equatorial.ToPolar().ToDirectionCosine().Rotate_Y(AstroUtil.HALF_PI - latitude);
         var pc = horizonRect.ToPolarCoordinates().AsHorizon();
         return pc;
     }
 
-    public static HorizonCoordinates EquatorialToHorizon_sofa(EquatorialCoordinates equatorial, double latitude) {
+    public static HorizonCoordinates EquatorialToHorizon_sofa(LocalEquatorialCoordinates equatorial, double latitude) {
         double alt = double.NaN;
         double az = double.NaN;
-        WWA.wwaHd2ae(ha: equatorial.RightAscension, dec: equatorial.Declination, phi: latitude, az: ref az, el: ref alt);
+        WWA.wwaHd2ae(ha: equatorial.LocalHourAngle, dec: equatorial.Declination, phi: latitude, az: ref az, el: ref alt);
         return new HorizonCoordinates(
             azimuth: az,
             altitude: alt);

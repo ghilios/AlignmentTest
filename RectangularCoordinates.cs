@@ -51,4 +51,13 @@ public record RectangularCoordinates {
     public RectangularCoordinates Tilt(double tiltAngle, double tiltAmount) {
         return Rotate_Z(tiltAngle).Rotate_Y(tiltAmount);
     }
+
+    public RectangularCoordinates CrossProduct(RectangularCoordinates that) {
+        // https://en.wikipedia.org/wiki/Cross_product#Coordinate_notation
+        return new RectangularCoordinates() {
+            X = this.Y * that.Z - this.Z * that.Y,
+            Y = this.Z * that.X - this.X * that.Z,
+            Z = this.X * that.Y - this.Y * that.X
+        };
+    }
 }

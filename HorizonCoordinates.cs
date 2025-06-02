@@ -31,4 +31,11 @@ public record HorizonCoordinates {
             phi: Altitude,
             theta: -Azimuth);
     }
+
+    /*
+    public RectangularCoordinates ToApparentCoordinates(double latitude) {
+        return this.
+        .ToDirectionCosine().Rotate_Y(AstroUtil.HALF_PI - latitude);
+    }
+    */
 }

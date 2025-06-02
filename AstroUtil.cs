@@ -1,4 +1,6 @@
-﻿namespace AlignmentTest {
+﻿using WorldWideAstronomy;
+
+namespace AlignmentTest {
 
     public class AstroUtil {
 
@@ -147,6 +149,33 @@
             } else {
                 return double.NaN;
             }
+        }
+
+        public static double ToMeanSiderealTime(DateTime dateTime) {
+            double deltaT = double.NaN;
+            dateTime = dateTime.ToUniversalTime();
+            WWA.wwaDat(dateTime.Year, dateTime.Month, dateTime.Day, 0.0d, ref deltaT);
+
+            double utcJd1 = double.NaN, utcJd2 = double.NaN;
+            WWA.wwaCal2jd(dateTime.Year, dateTime.Month, dateTime.Day, ref utcJd1, ref utcJd2);
+
+            utcJd2 += dateTime.TimeOfDay.TotalSeconds / WWA.DAYSEC;
+
+            // IERS Rapid Service can be used for Delta UT. Estimate it to 0 for now
+            double dut = 0.0d;
+
+            double ut1Jd1 = double.NaN, ut1Jd2 = double.NaN;
+            WWA.wwaUtcut1(utcJd1, utcJd2, dut, ref ut1Jd1, ref ut1Jd2);
+
+            // NOTE: taiJd1 = utcJd1, taiJd2 = utcJd2 + deltaT
+            // double taiJd1 = double.NaN, taiJd2 = double.NaN;
+            // WWA.wwaUtctai(utcJd1, utcJd2, ref taiJd1, ref taiJd2);
+            double taiJd1 = utcJd1;
+            double taiJd2 = utcJd2 + deltaT / WWA.DAYSEC;
+
+            double ttJd1 = double.NaN, ttJd2 = double.NaN;
+            WWA.wwaTaitt(taiJd1, taiJd2, ref ttJd1, ref ttJd2);
+            return WWA.wwaGmst06(ut1Jd1, ut1Jd2, ttJd1, ttJd2);
         }
     }
 }

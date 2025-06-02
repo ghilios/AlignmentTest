@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WorldWideAstronomy;
 
 namespace AlignmentTest;
 
@@ -16,18 +17,13 @@ public record EquatorialCoordinates {
     public double RightAscension { get; private set; }
 
     public override string ToString() {
-        return $"RA {AstroUtil.RadiansToDMS(RightAscension)} Dec {AstroUtil.RadiansToDMS(Declination)}";
+        return $"RA {AstroUtil.RadiansToHMS(RightAscension)} Dec {AstroUtil.RadiansToDMS(Declination)}";
     }
 
-    public static EquatorialCoordinates FromPolar(PolarCoordinates pc) {
-        return new EquatorialCoordinates(
-            ra: Math.PI - pc.Theta,
-            dec: pc.Phi);
-    }
-
-    public PolarCoordinates ToPolar() {
-        return new PolarCoordinates(
-            phi: Declination,
-            theta: Math.PI - RightAscension);
+    public LocalEquatorialCoordinates ToLocalEquatorial(DateTime dateTime, double longitude) {
+        var siderealTime = AstroUtil.ToMeanSiderealTime(dateTime);
+        var localSiderealTime = WWA.wwaAnp(siderealTime - longitude);
+        var localHourAngle = localSiderealTime - this.RightAscension;
+        return new LocalEquatorialCoordinates(lha: localHourAngle, dec: this.Declination);
     }
 }

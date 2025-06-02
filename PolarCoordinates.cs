@@ -12,9 +12,9 @@ public record PolarCoordinates {
         this.Theta = theta;
     }
 
-    public double Phi { get; private set; }
+    public double Phi { get; private set; } // Altitude
 
-    public double Theta { get; private set; }
+    public double Theta { get; private set; } // Azimuth
 
     public RectangularCoordinates ToDirectionCosine() {
         return new RectangularCoordinates() {
@@ -24,8 +24,8 @@ public record PolarCoordinates {
         };
     }
 
-    public EquatorialCoordinates AsEquatorial() {
-        return EquatorialCoordinates.FromPolar(this);
+    public LocalEquatorialCoordinates AsLocalEquatorial() {
+        return LocalEquatorialCoordinates.FromPolar(this);
     }
 
     public HorizonCoordinates AsHorizon() {
