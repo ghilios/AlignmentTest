@@ -4,11 +4,29 @@ namespace AlignmentTest;
 
 public class Program
 {
-    static void Main(string[] args)
-    {
+    static void Main(string[] args) {
+        double latitude = AstroUtil.ToRadians(41.2915117d); // 41 17 29.4426 N
+        double longitude = AstroUtil.ToRadians(-74.3612d); // 74 22 42.7044 W
+        /*
+        while (true) {
+            double now_lmst = AstroUtil.ToMeanSiderealTime(DateTime.UtcNow) + longitude;
+            Console.Write($"\rLMST: {AstroUtil.RadiansToHMS(now_lmst)}");
+            Thread.Sleep(250);
+        }
+        */
+
         DateTime now = DateTime.UtcNow;
         double gmst = AstroUtil.ToMeanSiderealTime(now);
+        double lmst = gmst + longitude;
         Console.WriteLine($"GMST: {AstroUtil.RadiansToHMS(gmst)}");
+        Console.WriteLine($"LMST: {AstroUtil.RadiansToHMS(lmst)}");
+
+        var encoderPosition = new EncoderPosition() { AltitudePosition=0, AzimuthPosition=-8192 };
+        var hardwareParameters = new HardwareParameters() { AltitudeSteps = 32768, AzimuthSteps = 32768, Latitude = latitude, Longitude = longitude };
+        var alignmentParameters = new AlignmentParameters() { AltitudeOffset = 0, AzimuthOffset = 0, TiltAmount = AstroUtil.ToRadians(45.0), TiltAngle = AstroUtil.ToRadians(0.0) };
+
+        CoordinateSpaceTransformations.ToSkyHorizonCoordinates(encoderPosition, hardwareParameters, alignmentParameters);
+        return;
 
         // Right Ascension (RA) 6 hr 45 min 09 sec, Declination (Dec) -16 deg 42 min 58 sec
         // Latitude 41.
@@ -20,8 +38,7 @@ public class Program
         };
         */
 
-        double latitude = AstroUtil.ToRadians(41.2915117d); // 41 17 29.4426 N
-        double longitude = AstroUtil.ToRadians(-74.3785292d); // 74 22 42.7044 W
+
         System.Console.WriteLine($"Latitude: {AstroUtil.RadiansToDMS(latitude)}");
         System.Console.WriteLine($"Longitude: {AstroUtil.RadiansToDMS(longitude)}");
         EquatorialCoordinates siriusCoordinates = new EquatorialCoordinates(

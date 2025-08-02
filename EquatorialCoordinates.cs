@@ -26,4 +26,13 @@ public record EquatorialCoordinates {
         var localHourAngle = localSiderealTime - this.RightAscension;
         return new LocalEquatorialCoordinates(lha: localHourAngle, dec: this.Declination);
     }
+
+    public HorizonCoordinates ToHorizonCoordinates(DateTime dateTime, double longitude, double latitude) {
+        return ToLocalEquatorial(dateTime, longitude)
+            .ToPolar()
+            .ToDirectionCosine()
+            .Rotate_Y(AstroUtil.HALF_PI - latitude)
+            .ToPolarCoordinates()
+            .AsHorizon();
+    }
 }

@@ -4,13 +4,14 @@ using System.Linq;
 using System.Net.Mail;
 using System.Text;
 using System.Threading.Tasks;
+using WorldWideAstronomy;
 
 namespace AlignmentTest;
 
 public record HorizonCoordinates {
     public HorizonCoordinates(double altitude, double azimuth) {
-        this.Altitude = AstroUtil.ClampPositiveRadians(altitude);
-        this.Azimuth = AstroUtil.ClampHalfPositiveRadians(azimuth);
+        this.Altitude = WWA.wwaAnpm(altitude);
+        this.Azimuth = WWA.wwaAnp(azimuth);
     }
 
     public double Altitude { get; private set; }

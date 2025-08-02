@@ -14,8 +14,8 @@ namespace AlignmentTest {
     }
 
     public record AlignmentParameters {
-        public required int AltitudeOffset { get; init; }
-        public required int AzimuthOffset { get; init; }
+        public required double AltitudeOffset { get; init; }
+        public required double AzimuthOffset { get; init; }
         public required double TiltAngle { get; init; }
         public required double TiltAmount { get; init; }
     }
@@ -30,17 +30,24 @@ namespace AlignmentTest {
             EncoderPosition position,
             HardwareParameters hardware,
             AlignmentParameters alignment) {
-            int absoluteAltitudePosition = (position.AltitudePosition + alignment.AltitudeOffset) % hardware.AltitudeSteps;
-            int absoluteAzimuthPosition = (position.AzimuthPosition + alignment.AzimuthOffset) % hardware.AzimuthSteps;
-            double absoluteAltitudeAngle = WWA.wwaAnpm(WWA.D2PI * absoluteAltitudePosition / hardware.AltitudeSteps);
-            double absoluteAzimuthAngle = WWA.wwaAnp(WWA.D2PI * absoluteAzimuthPosition / hardware.AzimuthSteps);
-            var telescopeCoordinates = new HorizonCoordinates(altitude: absoluteAltitudeAngle, azimuth: absoluteAltitudeAngle);
-            return telescopeCoordinates
-                .ToPolar()
-                .ToDirectionCosine()
-                .Tilt(tiltAngle: alignment.TiltAngle, tiltAmount: alignment.TiltAmount)
-                .ToPolarCoordinates()
-                .AsHorizon();
+            double absoluteAltitudeAngle = WWA.wwaAnpm(WWA.D2PI * (position.AltitudePosition + alignment.AltitudeOffset) / hardware.AltitudeSteps);
+            double absoluteAzimuthAngle = WWA.wwaAnp(WWA.D2PI * (position.AzimuthPosition + alignment.AzimuthOffset) / hardware.AzimuthSteps);
+            double[] telescopeDirectionCosine = new double[3];
+            WWA.wwaS2c(theta: absoluteAzimuthAngle, phi: absoluteAltitudeAngle, telescopeDirectionCosine);
+
+            double[,] tiltRotationMat = new double[3,3];
+            WWA.wwaIr(tiltRotationMat);
+            WWA.wwaRz(alignment.TiltAngle, tiltRotationMat);
+            WWA.wwaRx(alignment.TiltAmount, tiltRotationMat);
+
+            double[] skyDirectionCosine = new double[3];
+            WWA.wwaRxp(tiltRotationMat, telescopeDirectionCosine, skyDirectionCosine);
+
+            double skyTheta = double.NaN;
+            double skyPhi = double.NaN;
+            WWA.wwaC2s(skyDirectionCosine, ref skyTheta, ref skyPhi);
+            var result = new HorizonCoordinates(azimuth: skyTheta, altitude: skyPhi);
+            return result;
         }
     }
 }

@@ -49,7 +49,7 @@ public record RectangularCoordinates {
     }
 
     public RectangularCoordinates Tilt(double tiltAngle, double tiltAmount) {
-        return Rotate_Z(tiltAngle).Rotate_Y(tiltAmount);
+        return Rotate_Z(-tiltAngle).Rotate_Y(-tiltAmount);
     }
 
     public RectangularCoordinates CrossProduct(RectangularCoordinates that) {
