@@ -3,6 +3,7 @@
 namespace AlignmentTest {
 
     public class AstroUtil {
+        public const double SiderealSecondsPerSecond = 1.00273781191135448d;
 
         private const double DegreeToRadiansFactor = Math.PI / 180d;
         private const double RadiansToDegreeFactor = 180d / Math.PI;
@@ -176,6 +177,36 @@ namespace AlignmentTest {
             double ttJd1 = double.NaN, ttJd2 = double.NaN;
             WWA.wwaTaitt(taiJd1, taiJd2, ref ttJd1, ref ttJd2);
             return WWA.wwaGmst06(ut1Jd1, ut1Jd2, ttJd1, ttJd2);
+        }
+
+        public static double tdbMinusTt(DateTime dateTime, LocationParameters location) {
+            double deltaT = double.NaN;
+            dateTime = dateTime.ToUniversalTime();
+            WWA.wwaDat(dateTime.Year, dateTime.Month, dateTime.Day, 0.0d, ref deltaT);
+
+            double utcJd1 = double.NaN, utcJd2 = double.NaN;
+            WWA.wwaCal2jd(dateTime.Year, dateTime.Month, dateTime.Day, ref utcJd1, ref utcJd2);
+
+            utcJd2 += dateTime.TimeOfDay.TotalSeconds / WWA.DAYSEC;
+            double dut = 0.0d;
+
+            double ut1Jd1 = double.NaN, ut1Jd2 = double.NaN;
+            WWA.wwaUtcut1(utcJd1, utcJd2, dut, ref ut1Jd1, ref ut1Jd2);
+
+            double taiJd1 = utcJd1;
+            double taiJd2 = utcJd2 + deltaT / WWA.DAYSEC;
+
+            double ttJd1 = double.NaN, ttJd2 = double.NaN;
+            WWA.wwaTaitt(taiJd1, taiJd2, ref ttJd1, ref ttJd2);
+
+            double[] geocentricPosition = new double[3];
+            WWA.wwaGd2gc(1, location.Longitude, location.Latitude, location.Elevation, geocentricPosition);
+            double u = Math.Sqrt(geocentricPosition[0] * geocentricPosition[0] + geocentricPosition[1] * geocentricPosition[1]);
+            double v = geocentricPosition[2];
+
+            double ut = Math.IEEERemainder(Math.IEEERemainder(ut1Jd1, 1.0) + Math.IEEERemainder(ut1Jd2, 1.0), 1.0) + 0.5;
+            return WWA.wwaDtdb(ttJd1, ttJd2, ut, location.Longitude, u / 1000, v / 1000);
+
         }
     }
 }

@@ -18,7 +18,7 @@ public record HorizonCoordinates {
     public double Azimuth { get; private set; }
 
     public override string ToString() {
-        return $"Alt {AstroUtil.RadiansToDMS(Altitude)} Az {AstroUtil.RadiansToDMS(Azimuth)}";
+        return $"Az/Alt {AstroUtil.RadiansToDMS(Azimuth)}/{AstroUtil.RadiansToDMS(Altitude)}";
     }
 
     public static HorizonCoordinates FromPolar(PolarCoordinates pc) {
